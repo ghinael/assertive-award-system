@@ -5,32 +5,30 @@ const SUPABASE_URL = "https://cgrvzbcfysmoixmvtrod.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNncnZ6YmNmeXNtb2l4bXZ0cm9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NDUwOTksImV4cCI6MjA5NjAyMTA5OX0.U9YLZGNSMjEyaIduAs0e7V-ZD7QM7KEBb4G7erIP0Ks";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ============================================================
+// UPDATE SINI TIAP GANTI BULAN (awal bulan, sebelum ada yang isi)
+// ============================================================
 const TEAM = [
-  { name: "Pak Aldi", division: "CEO", room: "Depan 1" },
-  { name: "Yeni", division: "Finance", room: "Depan 1" },
-  { name: "Ghina", division: "PM", room: "Depan 1" },
-  { name: "Farhan", division: "Design", room: "Depan 1" },
-  { name: "Rizal", division: "Design", room: "Depan 1" },
-  { name: "Fery", division: "Design", room: "Depan 1" },
-  { name: "Tantra", division: "Brevet", room: "Depan 1" },
-  { name: "Naila", division: "Brevet", room: "Depan 1" },
-  { name: "Julian", division: "Design", room: "Depan 1" },
-  { name: "Ella", division: "MMBA", room: "Depan 2" },
-  { name: "Zia", division: "MMBA", room: "Depan 2" },
-  { name: "Dinda", division: "DBE", room: "Depan 2" },
-  { name: "Nasa", division: "DBE", room: "Depan 2" },
-  { name: "Raja", division: "DBE", room: "Depan 2" },
-  { name: "Wesy", division: "DBS", room: "Depan 2" },
-  { name: "Zaradiva", division: "Design", room: "Belakang 1" },
-  { name: "Hana", division: "Al-Azhar", room: "Belakang 1" },
-  { name: "Maulana", division: "Al-Azhar", room: "Belakang 1" },
-  { name: "Nafa", division: "SIC", room: "Belakang 2" },
-  { name: "Zara", division: "SIC", room: "Belakang 2" },
-  { name: "Tasya", division: "SIC", room: "Belakang 2" },
-  { name: "Meisya", division: "RA", room: "Belakang 2" },
+  { name: "Pak Aldi", division: "CEO" },
+  { name: "Yeni", division: "Finance" },
+  { name: "Ghina", division: "PM" },
+  { name: "Naila", division: "Brevet" },
+  { name: "Tasya", division: "Brevet" },
+  { name: "Zia", division: "MMBA" },
+  { name: "Ella", division: "MMBA" },
+  { name: "Dinda", division: "DBE" },
+  { name: "Dimas", division: "DBE" },
+  { name: "Zara", division: "DBS" },
+  { name: "Nafa", division: "DBS" },
+  { name: "Wesy", division: "DBS" },
+  { name: "Farhan", division: "Design" },
+  { name: "Zaradiva", division: "Design" },
+  { name: "Fery", division: "Design" },
+  { name: "Rizal", division: "Design" },
 ];
 
-const DIVISIONS = ["DBE", "MMBA", "SIC", "DBS", "Brevet", "Al-Azhar", "RA", "Design"];
+const DIVISIONS = ["DBE", "MMBA", "DBS", "Brevet", "Design"];
+// ============================================================
 
 const PERSONAL_PARAMS = [
   "Tidak menyindir / tidak pasif agresif",
@@ -91,7 +89,6 @@ const getMonthLabel = (ym) => {
   return `${months[parseInt(m) - 1]} ${y}`;
 };
 
-// Seeded random — deterministik berdasarkan seed angka
 function seededRandom(seed) {
   let s = seed >>> 0;
   return function() {
@@ -100,20 +97,13 @@ function seededRandom(seed) {
   };
 }
 
-// Generate assignment bulanan — konsisten selama sebulan, beda bulan berikutnya
-// Semua dapat tepat 4 penilaian masuk & keluar
-const STORAGE_KEY = "assertif_progress_v1";
-
-function getMonthlyAssignments(yearMonth) {
+// Generate assignment — hanya dipakai kalau belum ada di Supabase
+function generateAssignments(yearMonth) {
   const [y, m] = yearMonth.split("-").map(Number);
-  const seed = y * 100 + m + 42; // +42 biar Juni 2026 gak terlalu "obvious"
+  const seed = y * 100 + m + 42;
   const rng = seededRandom(seed);
-
-  // Shuffle team dengan seed bulan ini
   const shuffled = [...TEAM].sort(() => rng() - 0.5);
   const n = shuffled.length;
-
-  // Circle assignment: nilai 4 orang berikutnya
   const assignments = {};
   shuffled.forEach((person, i) => {
     assignments[person.name] = [];
@@ -123,6 +113,8 @@ function getMonthlyAssignments(yearMonth) {
   });
   return assignments;
 }
+
+const STORAGE_KEY = "assertif_progress_v1";
 
 export default function App() {
   const [view, setView] = useState("home");
@@ -143,8 +135,9 @@ export default function App() {
   const [statusList, setStatusList] = useState({ submitted: [], notSubmitted: [] });
   const [statusLoading, setStatusLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [lockedAssignments, setLockedAssignments] = useState(null); // assignment yang tersimpan di Supabase
 
-  // Load saved progress on mount (survive refresh)
+  // Load saved progress on mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -161,23 +154,20 @@ export default function App() {
           setDivisionScores(data.divisionScores || {});
         }
       }
-    } catch (e) { console.error("Failed to load progress", e); }
+    } catch (e) { console.error(e); }
     setHydrated(true);
   }, []);
 
-  // Save progress whenever it changes (after hydration to avoid overwriting on load)
+  // Save progress ke localStorage
   useEffect(() => {
     if (!hydrated) return;
-    if (step === 0 && !raterName) {
-      localStorage.removeItem(STORAGE_KEY);
-      return;
-    }
+    if (step === 0 && !raterName) { localStorage.removeItem(STORAGE_KEY); return; }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         month: getCurrentMonth(), view, step, raterName, assignment,
         currentRateeIdx, currentDivIdx, allPersonalScores, divisionScores, done,
       }));
-    } catch (e) { console.error("Failed to save progress", e); }
+    } catch (e) { console.error(e); }
   }, [hydrated, view, step, raterName, assignment, currentRateeIdx, currentDivIdx, allPersonalScores, divisionScores, done]);
 
   const currentMonth = getCurrentMonth();
@@ -186,13 +176,42 @@ export default function App() {
   const currentRatee = assignment[currentRateeIdx];
   const currentDiv = divisionList[currentDivIdx];
 
-  // Preview assignment (sebelum mulai)
-  const previewAssignment = raterName
-    ? (getMonthlyAssignments(currentMonth)[raterName] || []).map(n => TEAM.find(p => p.name === n)).filter(Boolean)
-    : [];
+  // Load locked assignments dari Supabase (biar konsisten sepanjang bulan)
+  useEffect(() => {
+    const loadLockedAssignments = async () => {
+      const { data } = await supabase.from("monthly_assignments").select("assignments").eq("month", currentMonth).limit(1);
+      if (data && data.length > 0) {
+        setLockedAssignments(data[0].assignments);
+      } else {
+        // Belum ada — generate dan simpan ke Supabase (dikerjakan pas ada yang login pertama kali)
+        const generated = generateAssignments(currentMonth);
+        await supabase.from("monthly_assignments").insert({ month: currentMonth, assignments: generated });
+        setLockedAssignments(generated);
+      }
+    };
+    loadLockedAssignments();
+  }, []);
+
+  const getAssignmentFor = (name) => {
+    const source = lockedAssignments || generateAssignments(currentMonth);
+    return (source[name] || []).map(n => TEAM.find(p => p.name === n)).filter(Boolean);
+  };
+
+  // Preview assignment di step 0
+  const previewAssignment = raterName ? getAssignmentFor(raterName) : [];
 
   useEffect(() => { if (view === "leaderboard") fetchLeaderboard(); }, [view, selectedMonth]);
   useEffect(() => { if (view === "status") fetchStatus(); }, [view]);
+
+  // Cek sudah submit bulan ini
+  useEffect(() => {
+    if (raterName) {
+      supabase.from("submissions").select("id").eq("month", currentMonth).eq("rater", raterName).limit(1)
+        .then(({ data }) => setAlreadySubmitted(data && data.length > 0));
+      supabase.from("division_scores").select("id").eq("month", currentMonth).eq("rater", raterName).limit(1)
+        .then(({ data }) => setDivisionAlreadyDone(data && data.length > 0));
+    }
+  }, [raterName]);
 
   const fetchStatus = async () => {
     setStatusLoading(true);
@@ -205,16 +224,6 @@ export default function App() {
     } catch (e) { console.error(e); }
     setStatusLoading(false);
   };
-
-  // Cek apakah sudah submit bulan ini
-  useEffect(() => {
-    if (raterName) {
-      supabase.from("submissions").select("id").eq("month", currentMonth).eq("rater", raterName).limit(1)
-        .then(({ data }) => setAlreadySubmitted(data && data.length > 0));
-      supabase.from("division_scores").select("id").eq("month", currentMonth).eq("rater", raterName).limit(1)
-        .then(({ data }) => setDivisionAlreadyDone(data && data.length > 0));
-    }
-  }, [raterName]);
 
   const fetchLeaderboard = async () => {
     setLoading(true);
@@ -255,9 +264,7 @@ export default function App() {
   };
 
   const startForm = () => {
-    const monthAssignments = getMonthlyAssignments(currentMonth);
-    const assignNames = monthAssignments[raterName] || [];
-    const assign = assignNames.map(n => TEAM.find(p => p.name === n)).filter(Boolean);
+    const assign = getAssignmentFor(raterName);
     setAssignment(assign);
     const initP = {};
     assign.forEach(p => { initP[p.name] = Array(PERSONAL_PARAMS.length).fill(0); });
@@ -274,9 +281,8 @@ export default function App() {
       for (const ratee of assignment) {
         const scoreObj = {};
         (allPersonalScores[ratee.name] || []).forEach((s, i) => { scoreObj[i] = s; });
-        await supabase.from("submissions").insert({ month: currentMonth, rater: raterName, ratee: ratee.name, room: ratee.room, personal_scores: scoreObj });
+        await supabase.from("submissions").insert({ month: currentMonth, rater: raterName, ratee: ratee.name, room: ratee.division, personal_scores: scoreObj });
       }
-      // Cek dulu apakah division_scores sudah ada untuk rater ini bulan ini (cegah dobel insert)
       const { data: existingDiv } = await supabase.from("division_scores").select("id").eq("month", currentMonth).eq("rater", raterName).limit(1);
       if (!existingDiv || existingDiv.length === 0) {
         const divObj = {};
@@ -296,8 +302,8 @@ export default function App() {
   const resetForm = () => {
     setStep(0); setRaterName(""); setAssignment([]);
     setCurrentRateeIdx(0); setCurrentDivIdx(0);
-    setAllPersonalScores({}); setDivisionScores({}); setDone(false); setAlreadySubmitted(false);
-    setDivisionAlreadyDone(false);
+    setAllPersonalScores({}); setDivisionScores({}); setDone(false);
+    setAlreadySubmitted(false); setDivisionAlreadyDone(false);
     localStorage.removeItem(STORAGE_KEY);
   };
 
@@ -314,9 +320,9 @@ export default function App() {
   const canNextDiv = currentDivScores.every(s => s > 0);
 
   const NavBtn = ({ v, label }) => (
-    <button onClick={() => { setView(v); }} style={{
+    <button onClick={() => setView(v)} style={{
       padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer",
-      background: view === v ? T.lavender || "#c4b5fd" : "transparent",
+      background: view === v ? "#c4b5fd" : "transparent",
       color: view === v ? "#fff" : T.textMuted,
       boxShadow: view === v ? "0 2px 8px rgba(167,139,250,0.4)" : "none",
     }}>{label}</button>
@@ -411,7 +417,7 @@ export default function App() {
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
-              {[[String(TEAM.length), "Anggota", "👥"], ["8", "Divisi", "🏢"], ["4", "Dinilai/orang", "⭐"]].map(([n, l, icon]) => (
+              {[["16", "Anggota", "👥"], ["5", "Divisi", "🏢"], ["4", "Dinilai/orang", "⭐"]].map(([n, l, icon]) => (
                 <div key={l} style={{ background: T.bgCard, border: `1px solid ${T.borderLight}`, borderRadius: 14, padding: "16px 8px", textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
                   <div style={{ fontSize: 20, marginBottom: 4 }}>{icon}</div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: T.purple }}>{n}</div>
@@ -451,7 +457,7 @@ export default function App() {
               <div style={{ textAlign: "center", padding: "60px 0" }}>
                 <div style={{ fontSize: 64, marginBottom: 20 }}>🎉</div>
                 <h2 style={{ fontSize: 26, fontWeight: 900, margin: "0 0 10px", color: T.text }}>Selesai!</h2>
-                <p style={{ color: T.textSub, marginBottom: 6 }}>Kamu menilai <strong style={{ color: T.purple }}>{assignment.length} orang</strong> dan <strong style={{ color: T.purple }}>{divisionList.length} divisi</strong></p>
+                <p style={{ color: T.textSub, marginBottom: 6 }}>Kamu menilai <strong style={{ color: T.purple }}>{assignment.length} orang</strong></p>
                 <p style={{ color: T.textMuted, fontSize: 13, marginBottom: 32 }}>Sampai bulan depan! 🙌</p>
                 <div style={{ display: "flex", gap: 10 }}>
                   <button onClick={resetForm} style={{ flex: 1, padding: "15px", borderRadius: 14, border: `1px solid ${T.border}`, background: T.bgCardAlt, color: T.textSub, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Kembali</button>
@@ -463,22 +469,18 @@ export default function App() {
               <div>
                 <h2 style={{ fontSize: 22, fontWeight: 900, marginBottom: 6, color: T.text }}>Halo! Siapa kamu? 👋</h2>
                 <p style={{ color: T.textSub, fontSize: 13, marginBottom: 24 }}>Pilih namamu untuk lihat assignment bulan {getMonthLabel(currentMonth)}</p>
-                {["Depan 1", "Depan 2", "Belakang 1", "Belakang 2"].map(room => (
-                  <div key={room} style={{ marginBottom: 20 }}>
-                    <div style={{ fontSize: 11, color: T.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>Ruangan {room}</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                      {TEAM.filter(p => p.room === room).map(p => (
-                        <button key={p.name} onClick={() => setRaterName(p.name)} style={{
-                          padding: "9px 16px", borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                          border: raterName === p.name ? `2px solid ${T.purple}` : `1px solid ${T.borderLight}`,
-                          background: raterName === p.name ? T.purpleLight : T.bgCard,
-                          color: raterName === p.name ? T.purpleDark : T.textSub,
-                          boxShadow: raterName === p.name ? "0 2px 8px rgba(167,139,250,0.3)" : "none",
-                        }}>{p.name}</button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
+                  {TEAM.map(p => (
+                    <button key={p.name} onClick={() => setRaterName(p.name)} style={{
+                      padding: "9px 16px", borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                      border: raterName === p.name ? `2px solid ${T.purple}` : `1px solid ${T.borderLight}`,
+                      background: raterName === p.name ? T.purpleLight : T.bgCard,
+                      color: raterName === p.name ? T.purpleDark : T.textSub,
+                      boxShadow: raterName === p.name ? "0 2px 8px rgba(167,139,250,0.3)" : "none",
+                    }}>{p.name}</button>
+                  ))}
+                </div>
 
                 {raterName && (
                   <div style={{ background: "linear-gradient(135deg, #fdf4ff, #f0f4ff)", border: `1px solid ${T.border}`, borderRadius: 14, padding: "16px", marginBottom: 16 }}>
@@ -488,7 +490,7 @@ export default function App() {
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                       {previewAssignment.map(p => (
                         <span key={p.name} style={{ fontSize: 12, padding: "4px 12px", background: "#fff", border: `1px solid ${T.borderLight}`, borderRadius: 20, color: T.textSub }}>
-                          {p.name} <span style={{ color: T.textMuted, fontSize: 10 }}>({p.room})</span>
+                          {p.name} <span style={{ color: T.textMuted, fontSize: 10 }}>({p.division})</span>
                         </span>
                       ))}
                     </div>
@@ -517,7 +519,7 @@ export default function App() {
                 <div style={{ background: "linear-gradient(135deg, #fdf4ff, #f0f4ff)", border: `1px solid ${T.border}`, borderRadius: 14, padding: "16px", marginBottom: 20 }}>
                   <div style={{ fontSize: 11, color: T.textMuted, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Penilaian Personal {currentRateeIdx + 1} / {assignment.length}</div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: T.text }}>{currentRatee?.name}</div>
-                  <div style={{ fontSize: 12, color: T.textSub, marginTop: 2 }}>{currentRatee?.division} · {currentRatee?.room}</div>
+                  <div style={{ fontSize: 12, color: T.textSub, marginTop: 2 }}>{currentRatee?.division}</div>
                   <div style={{ height: 6, background: T.borderLight, borderRadius: 99, marginTop: 12, overflow: "hidden" }}>
                     <div style={{ height: "100%", width: `${(currentPersonalScores.filter(s => s > 0).length / PERSONAL_PARAMS.length) * 100}%`, background: T.gradBtn, borderRadius: 99, transition: "width 0.2s" }} />
                   </div>
@@ -567,7 +569,6 @@ export default function App() {
                 {allMonths.map(m => <option key={m} value={m}>{getMonthLabel(m)}</option>)}
               </select>
             </div>
-
             {loading ? (
               <div style={{ textAlign: "center", padding: "60px 0", color: T.textMuted }}>Memuat... 🌸</div>
             ) : (
@@ -595,7 +596,6 @@ export default function App() {
           <div>
             <h2 style={{ fontSize: 22, fontWeight: 900, margin: "0 0 6px", color: T.text }}>📋 Status Pengisian</h2>
             <p style={{ color: T.textSub, fontSize: 13, marginBottom: 20 }}>Siapa yang sudah & belum isi bulan {getMonthLabel(currentMonth)}</p>
-
             {statusLoading ? (
               <div style={{ textAlign: "center", padding: "60px 0", color: T.textMuted }}>Memuat... 🌸</div>
             ) : (
@@ -609,35 +609,27 @@ export default function App() {
                     <div style={{ height: "100%", width: `${(statusList.submitted.length / TEAM.length) * 100}%`, background: T.gradBtn, borderRadius: 99, transition: "width 0.6s ease" }} />
                   </div>
                 </div>
-
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ fontSize: 11, fontWeight: 800, color: "#34d399", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 12 }}>✅ Sudah Isi ({statusList.submitted.length})</div>
-                  {statusList.submitted.length === 0 ? (
-                    <div style={{ background: T.bgCard, border: `1px solid ${T.borderLight}`, borderRadius: 14, padding: 20, textAlign: "center", color: T.textMuted, fontSize: 13 }}>Belum ada yang isi</div>
-                  ) : (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                      {statusList.submitted.map(p => (
-                        <span key={p.name} style={{ fontSize: 12, padding: "6px 14px", background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 20, color: "#047857", fontWeight: 600 }}>
-                          ✓ {p.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {statusList.submitted.length === 0
+                    ? <div style={{ background: T.bgCard, border: `1px solid ${T.borderLight}`, borderRadius: 14, padding: 20, textAlign: "center", color: T.textMuted, fontSize: 13 }}>Belum ada yang isi</div>
+                    : <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {statusList.submitted.map(p => (
+                          <span key={p.name} style={{ fontSize: 12, padding: "6px 14px", background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 20, color: "#047857", fontWeight: 600 }}>✓ {p.name}</span>
+                        ))}
+                      </div>
+                  }
                 </div>
-
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 800, color: "#f87171", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 12 }}>⏳ Belum Isi ({statusList.notSubmitted.length})</div>
-                  {statusList.notSubmitted.length === 0 ? (
-                    <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 14, padding: 20, textAlign: "center", color: "#047857", fontSize: 13, fontWeight: 700 }}>🎉 Semua sudah isi!</div>
-                  ) : (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                      {statusList.notSubmitted.map(p => (
-                        <span key={p.name} style={{ fontSize: 12, padding: "6px 14px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 20, color: "#b91c1c", fontWeight: 600 }}>
-                          {p.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {statusList.notSubmitted.length === 0
+                    ? <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 14, padding: 20, textAlign: "center", color: "#047857", fontSize: 13, fontWeight: 700 }}>🎉 Semua sudah isi!</div>
+                    : <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {statusList.notSubmitted.map(p => (
+                          <span key={p.name} style={{ fontSize: 12, padding: "6px 14px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 20, color: "#b91c1c", fontWeight: 600 }}>{p.name}</span>
+                        ))}
+                      </div>
+                  }
                 </div>
               </>
             )}
