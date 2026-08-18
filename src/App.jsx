@@ -70,12 +70,12 @@ const SCORE_LABELS = { 1: "Belum terlihat", 2: "Mulai terlihat", 3: "Terlihat ta
 const SCORE_COLORS = { 1: "#f87171", 2: "#fb923c", 3: "#fbbf24", 4: "#34d399", 5: "#818cf8" };
 
 const T = {
-  bg: "#fdf6ff", bgCard: "#ffffff", bgCardAlt: "#faf5ff",
-  border: "#e9d5ff", borderLight: "#f3e8ff",
-  text: "#4a3b5c", textSub: "#9c7bb5", textMuted: "#c4a8d9",
-  purple: "#a78bfa", purpleDark: "#7c3aed", purpleLight: "#ede9fe",
-  grad: "linear-gradient(135deg, #f9a8d4, #c4b5fd, #93c5fd)",
-  gradBtn: "linear-gradient(135deg, #c084fc, #818cf8)",
+  bg: "#fff8f8", bgCard: "#ffffff", bgCardAlt: "#fff0f0",
+  border: "#fca5a5", borderLight: "#fee2e2",
+  text: "#7f1d1d", textSub: "#b91c1c", textMuted: "#fca5a5",
+  purple: "#ef4444", purpleDark: "#991b1b", purpleLight: "#fee2e2",
+  grad: "linear-gradient(135deg, #ef4444, #dc2626, #b91c1c)",
+  gradBtn: "linear-gradient(135deg, #ef4444, #b91c1c)",
 };
 
 const getCurrentMonth = () => {
