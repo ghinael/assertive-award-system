@@ -16,7 +16,7 @@ const TEAM = [
   { name: "Tasya", division: "Brevet" },
   { name: "Zia", division: "MMBA" },
   { name: "Ella", division: "MMBA" },
-  { name: "Dinda", division: "DBE" },
+  { name: "Hana", division: "DBE" },
   { name: "Dimas", division: "DBE" },
   { name: "Zara", division: "DBS" },
   { name: "Nafa", division: "DBS" },
