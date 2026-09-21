@@ -401,7 +401,7 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'Sora', 'DM Sans', sans-serif" }}>
       {/* Header */}
-      <div style={{ background: "rgba(253,246,255,0.92)", backdropFilter: "blur(20px)", borderBottom: `1px solid ${T.borderLight}`, padding: "14px 20px", position: "sticky", top: 0, zIndex: 100 }}>
+      <div style={{ background: "rgba(244,251,245,0.92)", backdropFilter: "blur(20px)", borderBottom: `1px solid ${T.borderLight}`, padding: "14px 20px", position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontSize: 16, fontWeight: 800, background: T.grad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>✦ Assertif Award</div>
           <div style={{ display: "flex", gap: 4 }}>
