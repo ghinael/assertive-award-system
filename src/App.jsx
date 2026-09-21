@@ -13,18 +13,17 @@ const TEAM = [
   { name: "Yeni", division: "Finance" },
   { name: "Ghina", division: "PM" },
   { name: "Naila", division: "Brevet" },
-  { name: "Tasya", division: "Brevet" },
   { name: "Zia", division: "MMBA" },
   { name: "Ella", division: "MMBA" },
   { name: "Hana", division: "DBE" },
   { name: "Dimas", division: "DBE" },
   { name: "Zara", division: "DBS" },
-  { name: "Nafa", division: "DBS" },
   { name: "Wesy", division: "DBS" },
   { name: "Farhan", division: "Design" },
   { name: "Zaradiva", division: "Design" },
   { name: "Fery", division: "Design" },
   { name: "Rizal", division: "Design" },
+  { name: "Intan", division: "Design" },
 ];
 
 const DIVISIONS = ["DBE", "MMBA", "DBS", "Brevet", "Design"];
