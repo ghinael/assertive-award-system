@@ -69,12 +69,19 @@ const SCORE_LABELS = { 1: "Belum terlihat", 2: "Mulai terlihat", 3: "Terlihat ta
 const SCORE_COLORS = { 1: "#f87171", 2: "#fb923c", 3: "#fbbf24", 4: "#34d399", 5: "#818cf8" };
 
 const T = {
-  bg: "#fff8f8", bgCard: "#ffffff", bgCardAlt: "#fff0f0",
-  border: "#fca5a5", borderLight: "#fee2e2",
-  text: "#7f1d1d", textSub: "#b91c1c", textMuted: "#fca5a5",
-  purple: "#ef4444", purpleDark: "#991b1b", purpleLight: "#fee2e2",
-  grad: "linear-gradient(135deg, #ef4444, #dc2626, #b91c1c)",
-  gradBtn: "linear-gradient(135deg, #ef4444, #b91c1c)",
+  bg: "#f5fbf6",
+  bgCard: "#ffffff",
+  bgCardAlt: "#edf8ef",
+  border: "#a8d5b5",
+  borderLight: "#dcefe1",
+  text: "#245237",
+  textSub: "#4d8060",
+  textMuted: "#8bb59a",
+  purple: "#5e9f72",
+  purpleDark: "#2f6b45",
+  purpleLight: "#e2f3e6",
+  grad: "linear-gradient(135deg, #86c99b, #5fae78, #3f8d5a)",
+  gradBtn: "linear-gradient(135deg, #78bc8b, #4f9b68)",
 };
 
 const getCurrentMonth = () => {
@@ -320,10 +327,15 @@ export default function App() {
 
   const NavBtn = ({ v, label }) => (
     <button onClick={() => setView(v)} style={{
-      padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer",
-      background: view === v ? "#c4b5fd" : "transparent",
-      color: view === v ? "#fff" : T.textMuted,
-      boxShadow: view === v ? "0 2px 8px rgba(167,139,250,0.4)" : "none",
+      padding: "8px 16px",
+      borderRadius: 20,
+      fontSize: 13,
+      fontWeight: 700,
+      border: "none",
+      cursor: "pointer",
+      background: view === v ? "#a9d8b6" : "transparent",
+      color: view === v ? "#ffffff" : T.textMuted,
+      boxShadow: view === v ? "0 2px 8px rgba(79,155,104,0.28)" : "none",
     }}>{label}</button>
   );
 
@@ -349,11 +361,11 @@ export default function App() {
 
   const RankCard = ({ item, rank }) => (
     <div style={{
-      background: rank === 1 ? "linear-gradient(135deg, #fdf4ff, #f5f3ff)" : T.bgCard,
+      background: rank === 1 ? "linear-gradient(135deg, #f4fbf5, #e7f5eb)" : T.bgCard,
       border: `1px solid ${rank === 1 ? T.border : T.borderLight}`,
       borderRadius: 14, padding: "14px 16px", marginBottom: 8,
       display: "flex", alignItems: "center", gap: 14,
-      boxShadow: rank === 1 ? "0 4px 20px rgba(167,139,250,0.15)" : "0 1px 4px rgba(0,0,0,0.04)",
+      boxShadow: rank === 1 ? "0 4px 20px rgba(79,155,104,0.14)"  : "0 1px 4px rgba(0,0,0,0.04)",
     }}>
       <div style={{ width: 32, textAlign: "center", fontSize: rank <= 3 ? 22 : 13, color: "#c4a8d9", fontWeight: 700 }}>
         {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`}
@@ -378,7 +390,7 @@ export default function App() {
       background: disabled ? T.borderLight : T.gradBtn,
       color: disabled ? T.textMuted : "#fff",
       fontSize: 15, fontWeight: 700, cursor: disabled ? "default" : "pointer",
-      boxShadow: disabled ? "none" : "0 4px 16px rgba(167,139,250,0.4)",
+      boxShadow: disabled ? "none" : "0 4px 16px rgba(79,155,104,0.28)",
     }}>{children}</button>
   );
 
@@ -443,7 +455,7 @@ export default function App() {
               ))}
             </div>
 
-            <button onClick={() => setView("form")} style={{ width: "100%", padding: "15px", borderRadius: 14, border: "none", background: T.gradBtn, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 16px rgba(167,139,250,0.4)" }}>
+            <button onClick={() => setView("form")} style={{ width: "100%", padding: "15px", borderRadius: 14, border: "none", background: T.gradBtn, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 16px rgba(79,155,104,0.28)" }}>
               Mulai Nilai Sekarang 🌸
             </button>
           </div>
@@ -460,7 +472,7 @@ export default function App() {
                 <p style={{ color: T.textMuted, fontSize: 13, marginBottom: 32 }}>Sampai bulan depan! 🙌</p>
                 <div style={{ display: "flex", gap: 10 }}>
                   <button onClick={resetForm} style={{ flex: 1, padding: "15px", borderRadius: 14, border: `1px solid ${T.border}`, background: T.bgCardAlt, color: T.textSub, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Kembali</button>
-                  <button onClick={() => setView("leaderboard")} style={{ flex: 1, padding: "15px", borderRadius: 14, border: "none", background: T.gradBtn, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 16px rgba(167,139,250,0.4)" }}>Lihat Ranking →</button>
+                  <button onClick={() => setView("leaderboard")} style={{ flex: 1, padding: "15px", borderRadius: 14, border: "none", background: T.gradBtn, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 16px rgba(79,155,104,0.28)" }}>Lihat Ranking →</button>
                 </div>
               </div>
 
@@ -476,13 +488,13 @@ export default function App() {
                       border: raterName === p.name ? `2px solid ${T.purple}` : `1px solid ${T.borderLight}`,
                       background: raterName === p.name ? T.purpleLight : T.bgCard,
                       color: raterName === p.name ? T.purpleDark : T.textSub,
-                      boxShadow: raterName === p.name ? "0 2px 8px rgba(167,139,250,0.3)" : "none",
+                      boxShadow: raterName === p.name ? "0 2px 8px rgba(79,155,104,0.22)" : "none",
                     }}>{p.name}</button>
                   ))}
                 </div>
 
                 {raterName && (
-                  <div style={{ background: "linear-gradient(135deg, #fdf4ff, #f0f4ff)", border: `1px solid ${T.border}`, borderRadius: 14, padding: "16px", marginBottom: 16 }}>
+                  <div style={{ background: "linear-gradient(135deg, #f4fbf5, #e7f5eb)", border: `1px solid ${T.border}`, borderRadius: 14, padding: "16px", marginBottom: 16 }}>
                     <div style={{ fontSize: 12, color: T.purple, fontWeight: 700, marginBottom: 10 }}>
                       ✨ Assignment {getMonthLabel(currentMonth)} untuk {raterName}:
                     </div>
@@ -507,7 +519,7 @@ export default function App() {
                   background: (!raterName || alreadySubmitted) ? T.borderLight : T.gradBtn,
                   color: (!raterName || alreadySubmitted) ? T.textMuted : "#fff",
                   fontSize: 15, fontWeight: 700, cursor: (!raterName || alreadySubmitted) ? "default" : "pointer",
-                  boxShadow: (!raterName || alreadySubmitted) ? "none" : "0 4px 16px rgba(167,139,250,0.4)",
+                  boxShadow: (!raterName || alreadySubmitted) ? "none" : "0 4px 16px rgba(79,155,104,0.28)",
                 }}>
                   {alreadySubmitted ? "Sudah diisi bulan ini ✓" : "Lanjut →"}
                 </button>
@@ -515,7 +527,7 @@ export default function App() {
 
             ) : step === 1 ? (
               <div>
-                <div style={{ background: "linear-gradient(135deg, #fdf4ff, #f0f4ff)", border: `1px solid ${T.border}`, borderRadius: 14, padding: "16px", marginBottom: 20 }}>
+                <div style={{ background: "linear-gradient(135deg, #f4fbf5, #e7f5eb)", border: `1px solid ${T.border}`, borderRadius: 14, padding: "16px", marginBottom: 20 }}>
                   <div style={{ fontSize: 11, color: T.textMuted, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Penilaian Personal {currentRateeIdx + 1} / {assignment.length}</div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: T.text }}>{currentRatee?.name}</div>
                   <div style={{ fontSize: 12, color: T.textSub, marginTop: 2 }}>{currentRatee?.division}</div>
@@ -538,7 +550,7 @@ export default function App() {
 
             ) : step === 2 ? (
               <div>
-                <div style={{ background: "linear-gradient(135deg, #f0fdf4, #f0f4ff)", border: "1px solid #bbf7d0", borderRadius: 14, padding: "16px", marginBottom: 20 }}>
+                <div style={{ background: "linear-gradient(135deg, #f0fdf4, #e7f5eb)", border: "1px solid #bbf7d0", borderRadius: 14, padding: "16px", marginBottom: 20 }}>
                   <div style={{ fontSize: 11, color: T.textMuted, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Penilaian Divisi {currentDivIdx + 1} / {divisionList.length}</div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: T.text }}>Divisi {currentDiv}</div>
                   <div style={{ fontSize: 12, color: T.textSub, marginTop: 2 }}>Nilai perilaku tim secara keseluruhan</div>
