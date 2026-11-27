@@ -15,15 +15,16 @@ const TEAM = [
   { name: "Naila", division: "Brevet" },
   { name: "Zia", division: "MMBA" },
   { name: "Ella", division: "MMBA" },
+  { name: "Dewi", division: "MMBA" },
   { name: "Hana", division: "DBE" },
   { name: "Dimas", division: "DBE" },
-  { name: "Zara", division: "DBS" },
   { name: "Wesy", division: "DBS" },
   { name: "Farhan", division: "Design" },
   { name: "Zaradiva", division: "Design" },
   { name: "Fery", division: "Design" },
   { name: "Rizal", division: "Design" },
   { name: "Intan", division: "Design" },
+  { name: "Khalid", division: "Non-Divisi" },
 ];
 
 const DIVISIONS = ["DBE", "MMBA", "DBS", "Brevet", "Design"];
@@ -104,22 +105,110 @@ function seededRandom(seed) {
 }
 
 // Generate assignment — hanya dipakai kalau belum ada di Supabase
-function generateAssignments(yearMonth) {
-  const [y, m] = yearMonth.split("-").map(Number);
-  const seed = y * 100 + m + 42;
-  const rng = seededRandom(seed);
-  const shuffled = [...TEAM].sort(() => rng() - 0.5);
-  const n = shuffled.length;
-  const assignments = {};
-  shuffled.forEach((person, i) => {
-    assignments[person.name] = [];
-    for (let j = 1; j <= 4; j++) {
-      assignments[person.name].push(shuffled[(i + j) % n].name);
-    }
-  });
-  return assignments;
+const getPreviousMonth = (yearMonth) => {
+  const [year, month] = yearMonth.split("-").map(Number);
+  const date = new Date(year, month - 2, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+};
+
+const stringSeed = (text) =>
+  [...text].reduce((total, char) => ((total * 31) + char.charCodeAt(0)) >>> 0, 0);
+
+function seededShuffle(items, seed) {
+  const result = [...items];
+  const random = seededRandom(seed);
+
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+
+  return result;
 }
 
+function generateAssignments(yearMonth, history = []) {
+  const names = TEAM.map((person) => person.name);
+  const previousMonth = getPreviousMonth(yearMonth);
+  const previousAssignments =
+    history.find((row) => row.month === previousMonth)?.assignments || {};
+
+  const previousPairs = new Set();
+  const pairCounts = new Map();
+
+  history.forEach((row) => {
+    Object.entries(row.assignments || {}).forEach(([rater, ratees]) => {
+      (ratees || []).forEach((ratee) => {
+        const pair = `${rater}|${ratee}`;
+        pairCounts.set(pair, (pairCounts.get(pair) || 0) + 1);
+
+        if (row.month === previousMonth) previousPairs.add(pair);
+      });
+    });
+  });
+
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const chosenPairs = new Set();
+    const assignmentMap = Object.fromEntries(names.map((name) => [name, []]));
+    let complete = true;
+
+    for (let round = 0; round < 4; round++) {
+      const matchedRatees = new Map();
+      const raterOrder = seededShuffle(
+        names,
+        stringSeed(`${yearMonth}-${attempt}-${round}-raters`)
+      );
+
+      const tryMatch = (rater, seen) => {
+        const candidates = seededShuffle(
+          names.filter((ratee) => {
+            const pair = `${rater}|${ratee}`;
+            return (
+              ratee !== rater &&
+              !previousPairs.has(pair) &&
+              !chosenPairs.has(pair)
+            );
+          }),
+          stringSeed(`${yearMonth}-${attempt}-${round}-${rater}`)
+        ).sort((a, b) => {
+          const countA = pairCounts.get(`${rater}|${a}`) || 0;
+          const countB = pairCounts.get(`${rater}|${b}`) || 0;
+          return countA - countB;
+        });
+
+        for (const ratee of candidates) {
+          if (seen.has(ratee)) continue;
+          seen.add(ratee);
+
+          const currentRater = matchedRatees.get(ratee);
+          if (!currentRater || tryMatch(currentRater, seen)) {
+            matchedRatees.set(ratee, rater);
+            return true;
+          }
+        }
+
+        return false;
+      };
+
+      for (const rater of raterOrder) {
+        if (!tryMatch(rater, new Set())) {
+          complete = false;
+          break;
+        }
+      }
+
+      if (!complete) break;
+
+      matchedRatees.forEach((rater, ratee) => {
+        assignmentMap[rater].push(ratee);
+        chosenPairs.add(`${rater}|${ratee}`);
+      });
+    }
+
+    if (complete) return assignmentMap;
+  }
+
+  throw new Error("Assignment adil tidak dapat dibuat. Coba generate ulang.");
+}
 const STORAGE_KEY = "assertif_progress_v1";
 
 export default function App() {
@@ -190,7 +279,12 @@ export default function App() {
         setLockedAssignments(data[0].assignments);
       } else {
         // Belum ada — generate dan simpan ke Supabase (dikerjakan pas ada yang login pertama kali)
-        const generated = generateAssignments(currentMonth);
+        const { data: history } = await supabase
+          .from("monthly_assignments")
+          .select("month, assignments")
+          .lt("month", currentMonth);
+
+        const generated = generateAssignments(currentMonth, history || []);
         await supabase.from("monthly_assignments").insert({ month: currentMonth, assignments: generated });
         setLockedAssignments(generated);
       }
